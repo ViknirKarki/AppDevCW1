@@ -1,0 +1,276 @@
+﻿@page "/Coffees"
+@using AppDevCW1.Data
+
+
+
+<nav class="navbar navbar-light bg-light justify-content-between">
+    <h1 class="navbar-brand mb-0 h1">Coffees</h1>
+    <button class="btn btn-primary" type="button" @onclick="OpenAddCoffeesDialog">
+        <span class="oi oi-plus" /> Add
+    </button>
+</nav>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Coffees Name</th>
+            <th>Coffees Price</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var Coffees in _Coffees)
+        {
+            <tr>
+                <td>@Coffees.ID</td>
+                <td>@Coffees.CoffeesName</td>
+                <td>@Coffees.CoffeesPrice</td>
+                <td>
+                    <button class="btn btn-outline-danger" type="button" @onclick="()=>OpenDeleteCoffeesDialog(Coffees)">
+                        <span class="oi oi-delete" /> Delete
+                    </button>
+                    <button class="btn btn-outline-danger" type="button" @onclick="()=>OpenUpdateCoffeesDialog(Coffees)">
+                        <span class="oi oi-edit" /> Edit
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (_showAddCoffeesDialog)
+{
+    <ModalDialog Title="Add Coffees" OnClose="@OnAddCoffeesDialogClose" OkLabel="Add">
+        <div>
+            <div class="form-floating">
+                <input type="text" class="form-control username" @bind="_CoffeesName" placeholder="Coffees Name" />
+                <label for="floatingInput">Coffees Name</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="number" class="form-control password" @bind="_CoffeesPrice" placeholder="Coffees Price" />
+                <label for="floatingPassword">Coffees Price</label>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_addCoffeesErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@_addCoffeesErrorMessage" />
+            }
+        </div>
+    </ModalDialog>
+}
+
+@if (_showUpdateCoffeesDialog)
+{
+    <ModalDialog Title="Update Coffees" OnClose="@OnUpdateCoffeesDialogClose" OkLabel="Update">
+        <div>
+            <div class="form-floating">
+                <input type="text" class="form-control username" @bind="_CoffeesName" placeholder="Coffees Name" />
+                <label for="floatingInput">Coffees Name</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="number" class="form-control password" @bind="_CoffeesPrice" placeholder="Coffees Price" />
+                <label for="floatingPassword">Coffees Price</label>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_updateCoffeesErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@_updateCoffeesErrorMessage" />
+            }
+        </div>
+    </ModalDialog>
+}
+@if (_showDeleteCoffeesDialog)
+{
+    <ModalDialog Title="Delete Coffees" OnClose="@OnDeleteCoffeesDialogClose" OkLabel="Confirm">
+        <p>Are you sure you want to delete <strong>@_deleteCoffees.CoffeesName</strong> Coffees and it''s data?</p>
+        @if (!string.IsNullOrEmpty(_deleteCoffeesErrorMessage))
+        {
+            <AlertMessage Type="danger" Message="@_deleteCoffeesErrorMessage" />
+        }
+    </ModalDialog>
+}
+
+@if (_showPasswordConfirmationDialog)
+{
+    <ModalDialog Title="Confirm Update" OnClose="@OnPasswordConfirmationDialogClose" OkLabel="Confirm">
+        <div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control password" @bind="_passwordConfirmation" placeholder="Enter your password" />
+                <label for="floatingPassword">Password</label>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_passwordConfirmationErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@_passwordConfirmationErrorMessage" />
+            }
+        </div>
+    </ModalDialog>
+}
+
+@code {
+    [CascadingParameter]
+    private GlobalState _globalState { get; set; }
+
+    private Coffees _deleteCoffees { get; set; }
+    private Coffees _updateCoffees { get; set; }
+
+    private string _CoffeesName { get; set; }
+    private int _CoffeesPrice { get; set; }
+
+    private bool _showAddCoffeesDialog { get; set; }
+    private bool _showUpdateCoffeesDialog { get; set; }
+    private bool _showDeleteCoffeesDialog { get; set; }
+    private bool _showPasswordConfirmationDialog { get; set; }
+    private bool passwordIsValid { get; set; }
+
+    private string _addCoffeesErrorMessage { get; set; }
+    private string _deleteCoffeesErrorMessage { get; set; }
+    private string _updateCoffeesErrorMessage { get; set; }
+    private string _passwordConfirmationErrorMessage { get; set; }
+
+    private string _passwordConfirmation { get; set; }
+
+
+    private List<Coffees> _Coffees { get; set; }
+
+
+    protected override void OnInitialized()
+    {
+        _Coffees = CoffeesOperation.GetAllCoffees();
+    }
+
+    private void OpenAddCoffeesDialog()
+    {
+        _showAddCoffeesDialog = true;
+        _CoffeesName = "";
+        _CoffeesPrice = 0;
+    }
+
+    private void OnAddCoffeesDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+            _showAddCoffeesDialog = false;
+        }
+        else
+        {
+            try
+            {
+                _addCoffeesErrorMessage = "";
+                _Coffees = CoffeesOperation.AddCoffees(_CoffeesName, _CoffeesPrice);
+                _showAddCoffeesDialog = false;
+            }
+            catch (Exception e)
+            {
+                _addCoffeesErrorMessage = e.Message;
+            }
+        }
+    }
+
+    private void OpenUpdateCoffeesDialog(Coffees Coffees)
+    {
+        _updateCoffees = Coffees;
+        _showUpdateCoffeesDialog = true;
+        _CoffeesName = Coffees.CoffeesName;
+        _CoffeesPrice = Coffees.CoffeesPrice;
+    }
+
+    private void OpenPasswordConfirmationDialog()
+    {
+        _showPasswordConfirmationDialog = true;
+    }
+
+    private void OnUpdateCoffeesDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+            _showUpdateCoffeesDialog = false;
+            _updateCoffees = null;
+        }
+        else
+        {
+            // enable arko euto pop up to ask for password
+            OpenPasswordConfirmationDialog();
+            //if password matches tala ko try execute else iscancel wala code copy
+
+        }
+    }
+
+
+
+    private void OpenDeleteCoffeesDialog(Coffees Coffees)
+    {
+        _deleteCoffees = Coffees;
+        _showDeleteCoffeesDialog = true;
+    }
+
+    private void OnDeleteCoffeesDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+
+            _showDeleteCoffeesDialog = false;
+            _deleteCoffees = null;
+        }
+        else
+        {
+            OpenPasswordConfirmationDialog();
+
+        }
+    }
+    private void OnPasswordConfirmationDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+            _showPasswordConfirmationDialog = false;
+            _showUpdateCoffeesDialog = false;
+            _showDeleteCoffeesDialog = false;
+        }
+        else
+        {
+            if (_globalState.CurrentUser != null)
+                passwordIsValid = Func.VerifyHash(_passwordConfirmation, _globalState.CurrentUser.PasswordHash);
+
+            if (passwordIsValid && _showUpdateCoffeesDialog)
+            {
+                try
+                {
+                    _updateCoffeesErrorMessage = "";
+                    _Coffees = CoffeesOperation.UpdateCoffees(_updateCoffees.ID, _CoffeesName, _CoffeesPrice);
+                    _showPasswordConfirmationDialog = false;
+                    _showUpdateCoffeesDialog = false;
+                    _updateCoffees = null;
+                    _passwordConfirmation = null;
+                }
+                catch (Exception e)
+                {
+                    _updateCoffeesErrorMessage = e.Message;
+                    _passwordConfirmation = null;
+                }
+            }
+            else if (passwordIsValid && _showDeleteCoffeesDialog)
+            {
+                try
+                {
+                    _deleteCoffeesErrorMessage = "";
+                    _Coffees = CoffeesOperation.DeleteCoffees(_deleteCoffees.ID);
+                    _showPasswordConfirmationDialog = false;
+                    _showDeleteCoffeesDialog = false;
+                    _deleteCoffees = null;
+                    _passwordConfirmation = null;
+                }
+                catch (Exception e)
+                {
+                    _deleteCoffeesErrorMessage = e.Message;
+                    _passwordConfirmation = null;
+                }
+            }
+            else
+            {
+                _passwordConfirmationErrorMessage = "Password is invalid!";
+                _passwordConfirmation = null;
+            }
+        }
+    }
+}

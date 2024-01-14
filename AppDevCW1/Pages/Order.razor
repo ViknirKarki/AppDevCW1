@@ -1,0 +1,296 @@
+﻿@page "/order"
+@using AppDevCW1.Data
+
+@inject OrderOperation OrderOperation; 
+
+<style>
+    .scrollable {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .order_list {
+        max-height: 430px;
+        overflow-y: auto;
+    }
+</style>
+
+<div class="container-fluid p-3">
+    <div class="row">
+        <!-- Left Column (2/3 width) -->
+        <div class="col-md-8">
+            <!-- Top Left Section -->
+            <div class="card mb-3">
+                <div class="card-header"><strong>Coffees Section</strong></div>
+                <div class="card-body scrollable rounded">
+                    <div class="row">
+                        <!-- Display cards in a 3x3 grid -->
+                        <!--Loop goes here-->
+                        @foreach (var Coffees in _Coffees)
+                            {
+                            <div class="col-md-4">
+                                <div class="card mb-3 shadow-sm ">
+                                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                                        <h2>☕️</h2>
+                                        <h5 class="card-title">@Coffees.CoffeesName</h5>
+                                        <p class="card-text">Price: Rs.@Coffees.CoffeesPrice</p>
+                                        <button class="btn btn-primary" type="button" @onclick="()=> onAddToOrderList(1, Coffees.ID)"> Add to Order List</button>
+                                    </div>
+                                </div>
+                            </div>
+                            }
+
+                            <!-- Repeat the structure for the remaining cards -->
+                            <!-- Add more cards as needed -->
+                        </div>
+                </div>
+            </div>
+
+            <!-- Bottom Left Section -->
+            <div class="card">
+                <div class="card-header"><strong>Add Ins Section</strong></div>
+                <div class="card-body scrollable">
+                    <div class="row">
+                        <!-- Display cards in a 3x3 grid -->
+                        <!--Loop goes here-->
+                        @foreach (var addIn in _addIns)
+                            {
+                            <div class="col-md-4">
+                                <div class="card mb-3 shadow-sm ">
+                                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                                        <h2>+</h2>
+                                        <h5 class="card-title">@addIn.AddInName</h5>
+                                        <p class="card-text">Price: Rs.@addIn.AddInPrice</p>
+                                        <button class="btn btn-primary" type="button" @onclick="()=> onAddToOrderList(2, addIn.ID)"> Add to Order List</button>
+                                    </div>
+                                </div>
+                            </div>
+                           }
+                            <!-- Repeat the structure for the remaining cards -->
+                            <!-- Add more cards as needed -->
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column (1/3 width) -->
+        <div class="col-md-4 ">
+            <div class="card w-100 ">
+                <div class="card-header"><strong> Order List</strong> </div>
+                <div class="card-body">
+                    <!-- Add your product list here -->
+                    <ul class="list-group order_list">
+                        @if (OrderOperation.orderInstance.CoffeesOrderList.Count() > 0 || OrderOperation.orderInstance.AddInsList.Count() > 0)
+                        {
+
+                            @foreach (var Coffees in OrderOperation.orderInstance.CoffeesOrderList)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <button class="" style="border: none; background: none">
+                                        <strong>@Coffees.CoffeesName</strong>
+                                    </button>
+
+                                    <div class="d-flex gap-3">
+                                        <button style="border: none; background: none">
+                                            Price: Rs.  @Coffees.CoffeesPrice
+                                        </button>
+                                        <button class="btn btn-light btn-sm ml-2" @onclick="() => removeFromOrderList(1, Coffees.ID)">🗑️</button>
+                                    </div>
+                                </li>
+                            }
+                            @foreach (var addIn in OrderOperation.orderInstance.AddInsList)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <button class="" style="border: none; background: none">
+                                        <strong>@addIn.AddInName</strong>
+                                    </button>
+
+                                    <div class="d-flex gap-3">
+                                        <button style="border: none; background: none">
+                                            Price: Rs.  @addIn.AddInPrice
+                                        </button>
+                                        <button class="btn btn-light btn-sm ml-2" @onclick="() => removeFromOrderList(2, addIn.ID)">🗑️</button>
+                                    </div>
+                                </li>
+                            }
+                        }
+                        else
+                        {
+                            <li class="list-group-item d-flex justify-content-between pb-0">
+                                <p class=""><strong>Order list Empty</strong></p>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <div class=" mx-4">
+                    <div>
+                        <div class="d-flex justify-content-between">
+                            <p><strong>Total: </strong></p>
+                            <p>Rs. @OrderOperation.orderInstance.FinalPrice</p>
+                        </div>
+                        @if (OrderOperation.orderInstance.CoffeesOrderList.Count > 0 || OrderOperation.orderInstance.AddInsList.Count > 0)
+                          {
+                            <div class="d-flex justify-content-between align-items-end">
+                                <div class="form-group mb-2 mr-2" style="width: 90%;">
+                                    <label for="customer" class="sr-only">Customer Phone</label>
+                                    <input type="text" class="form-control" id="customer" placeholder="Enter customer phone number" @bind="CustomerPhNum" required />
+                                </div>
+                                <button class="btn btn-dark mb-2" @onclick="() => searchCustomer(CustomerPhNum)">Search</button>
+                            </div>
+                            <AlertMessage Type="@searchMessageType" Message="@customerSearchMessage" />
+                          }
+                        @if (customerSearched)
+                        {
+                            <div class="d-flex justify-content-between">
+                                <p><strong>Free Coffees?: </strong></p>
+                                <p>@freeCoffees</p>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <p><strong>Discount: </strong></p>
+                                <p>Rs. @OrderOperation.orderInstance.Discount</p>
+                            </div>
+                            <AlertMessage Type="@DiscountMessageType" Message="@customerDiscountMessage" />
+                            <div class="d-flex justify-content-between">
+                                <p><strong>Grand Total: </strong></p>
+                                <p>Rs. @OrderOperation.orderInstance.FinalPrice</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+                @if ((OrderOperation.orderInstance.CoffeesOrderList.Count() > 0 || OrderOperation.orderInstance.AddInsList.Count > 0) && customerSearched)
+                    {
+                <div class="card-footer text-center">
+                    <button class="btn btn-success w-100" @onclick ="() => CheckOut()">Check Out</button>
+                </div>
+                    }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (showOrderAddedMessage)
+{   
+    <ModalDialog Title="Order Status" OnClose="() => { showOrderAddedMessage = false; }" OkLabel="Okay">
+        <AlertMessage Type="success" Message="Order has been placed successfully!" />
+    </ModalDialog>
+}
+
+
+@code {
+    private string CustomerPhNum { get; set; }
+    private string freeCoffees { get; set; } = "No";
+    private string customerSearchMessage { get; set; } = "Search for customer for  Discounts";
+    private string searchMessageType { get; set; } = "info";
+    private string customerDiscountMessage { get; set; }
+    private string DiscountMessageType { get; set; }
+    private bool showOrderAddedMessage { get; set; }
+
+    private bool customerSearched { get; set; } = false;
+
+    private List<Coffees> _Coffees { get; set; }
+    private List<AddIns> _addIns { get; set; }
+
+    //private Order orderInstance = OrderOperation.CreateOrderInstance(); 
+
+    protected override void OnInitialized()
+    {
+        _Coffees = CoffeesOperation.GetAllCoffees();
+        _addIns = AddInsOperation.GetAllAddIns();
+
+    }
+
+    private void onAddToOrderList(int requestFrom, int ID)
+    {
+        if (requestFrom == 1)
+        {
+            Coffees CoffeesToAdd = _Coffees.Find(x => x.ID == ID);
+            OrderOperation.orderInstance.CoffeesOrderList.Add(CoffeesToAdd);
+            OrderOperation.orderInstance.TotalPrice = OrderOperation.orderInstance.TotalPrice + CoffeesToAdd.CoffeesPrice;
+        }
+        else
+        {
+            AddIns addInToAdd = _addIns.Find(x => x.ID == ID);
+            OrderOperation.orderInstance.AddInsList.Add(addInToAdd);
+            OrderOperation.orderInstance.TotalPrice = OrderOperation.orderInstance.TotalPrice + addInToAdd.AddInPrice;
+        }
+    }
+
+    private void removeFromOrderList(int requestFrom, int ID)
+    {
+        if (requestFrom == 1)
+        {
+            Coffees CoffeesToRemove = OrderOperation.orderInstance.CoffeesOrderList.Find(x => x.ID == ID);
+            OrderOperation.orderInstance.CoffeesOrderList.Remove(CoffeesToRemove);
+            OrderOperation.orderInstance.TotalPrice = OrderOperation.orderInstance.TotalPrice - CoffeesToRemove.CoffeesPrice;
+        }
+        else
+        {
+            AddIns addInToRemove = OrderOperation.orderInstance.AddInsList.Find(x => x.ID == ID);
+            OrderOperation.orderInstance.AddInsList.Remove(addInToRemove);
+            OrderOperation.orderInstance.TotalPrice = OrderOperation.orderInstance.TotalPrice - addInToRemove.AddInPrice;
+        }
+    }
+
+    private void searchCustomer(string CustomerPhNum)
+    {
+        OrderOperation.orderInstance.CustomerPhNum = CustomerPhNum;
+        int orderCount = OrderOperation.getOrderCount(CustomerPhNum);
+
+        if (string.IsNullOrWhiteSpace(CustomerPhNum))
+        {
+            searchMessageType = "danger";
+            customerSearchMessage = "Customer phone is empty";
+        }
+        else
+        {
+            if (orderCount == 0)
+            {
+                customerSearchMessage = "New Customer Detected";
+                searchMessageType = "warning";
+            }
+            if (orderCount > 0)
+            {
+                searchMessageType = "info";
+                customerSearchMessage = "No Free Coffees";
+            }
+
+            if (orderCount > 0 && orderCount % 10 == 0)
+            {
+                freeCoffees = "Yes";
+                customerSearchMessage = "Free Coffees Available";
+                searchMessageType = "success";
+            }
+
+            if (OrderOperation.checkDiscountAvailable(CustomerPhNum))
+            {
+                DiscountMessageType = "success";
+                customerDiscountMessage = "10% Discount applied.";
+                OrderOperation.orderInstance.Discount = (int)Math.Round(0.1 * OrderOperation.orderInstance.TotalPrice);
+            }
+            else
+            {
+                DiscountMessageType = "danger";
+                customerDiscountMessage = "No Discount available";
+            }
+
+            OrderOperation.orderInstance.FinalPrice = OrderOperation.orderInstance.TotalPrice - OrderOperation.orderInstance.Discount;
+
+            if (freeCoffees.Equals("Yes"))
+            {
+                int deductableAmount = OrderOperation.GetCoffeesWithHighestPrice();
+                OrderOperation.orderInstance.FinalPrice = OrderOperation.orderInstance.FinalPrice-deductableAmount;
+            }
+
+            customerSearched = true;
+        }
+
+    }
+
+    private void CheckOut()
+    {
+        CustomerPhNum = "";
+        OrderOperation.SaveAllOrders();
+        customerSearched = false;
+        showOrderAddedMessage = true;
+    }
+
+    }

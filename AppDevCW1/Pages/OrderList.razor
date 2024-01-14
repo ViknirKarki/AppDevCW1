@@ -1,0 +1,61 @@
+﻿@page "/orderlist"
+@using AppDevCW1.Data
+@inject OrderOperation OrderOperation;
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>S.N</th>
+            <th>Coffees List</th>
+            <th>AddIn List</th>
+            <th>Customer Phone</th>
+            <th>Order Date</th>
+            <th>Total Amount</th>
+            <th>Discount</th>
+            <th>Grand Total</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in _orders)
+        {
+            <tr>
+                <td>@(++index)</td>
+                <td>
+                    @if (order.CoffeesOrderList != null)
+                        {
+                        @foreach (var Coffees in order.CoffeesOrderList)
+                            {
+                            <p>@Coffees.CoffeesName</p>
+                            }
+                        }
+                </td>
+                <td>
+                    @if (order.AddInsList != null)
+                        { 
+                    @foreach (var addIn in order.AddInsList)
+                    {
+                        <p>@addIn.AddInName</p>
+                    }
+                }
+                </td>
+                <td>@order.CustomerPhNum</td>
+                <td>@order.OrderDate</td>
+                <td>@order.TotalPrice</td>
+                <td>@order.Discount</td>
+                <td>@order.FinalPrice</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+@code {
+    List<Orders> _orders { get; set; }
+    int index = 0;
+    protected override void OnInitialized()
+    {
+        _orders = OrderOperation.GetAllOrders();
+    }
+
+}
